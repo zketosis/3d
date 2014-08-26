@@ -1,322 +1,369 @@
-
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js webgl - draggable cubes</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #5a5858;
-				margin: 0px;
-				overflow: hidden;
-			}
-		</style>
-	</head>
-	<body>
 
-		<script src="three.min.js"></script>
+<head>
+    <title>three.js webgl - draggable cubes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #5a5858;
+            margin: 0px;
+            overflow: hidden;
+        }
+    </style>
+</head>
 
-		<script src="js/controls/TrackballControls.js"></script>
-
-		<script src="js/libs/stats.min.js"></script>
-        <script src='threex.keyboardstate.js'></script>
-		<script>
-            
-           
-            var Zkeyboard = new THREEx.KeyboardState();
-           // debugger;
-			var container, stats;
-			var camera, controls, scene, projector, renderer;
-			var objects = [], plane;
-
-			var mouse = new THREE.Vector2(),
-			offset = new THREE.Vector3(),
-			INTERSECTED, SELECTED;
-
-			init();
-			animate();
-
-			function init() {
-
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.z = 1500;
-                camera.position.y = 1500;
-                camera.position.x = -700;
-                
-				controls = new THREE.TrackballControls( camera );
-				controls.rotateSpeed = 1.0;
-				controls.zoomSpeed = 1.2;
-				controls.panSpeed = 0.8;
-				controls.noZoom = false;
-				controls.noPan = false;
-				controls.staticMoving = true;
-				controls.dynamicDampingFactor = 0.3;
-
-				scene = new THREE.Scene();
-
-				scene.add( new THREE.AmbientLight( 0x505050 ) );
-
-				var light = new THREE.SpotLight( 0xffffff, 1.5 );
-				light.position.set( 0, 500, 2000 );
-				light.castShadow = true;
-
-				light.shadowCameraNear = 200;
-				light.shadowCameraFar = camera.far;
-				light.shadowCameraFov = 50;
-
-				light.shadowBias = -0.00022;
-				light.shadowDarkness = 0.5;
-
-				light.shadowMapWidth = 2048;
-				light.shadowMapHeight = 2048;
-
-				scene.add( light );
-
-				var geometry = new THREE.BoxGeometry( 100, 100, 100 );
-
-				for ( var i = 0; i < 10; i ++ ) {
-
-					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {color: Math.random() * 0xffffff , transparent: true, opacity: 0.9} ) );
-
-					object.material.ambient = object.material.color;
-
-					object.position.x = (i-5)*100; //Math.random() * 1000 - 500;
-					object.position.y = (i-5)*100+500; //Math.random() * 600 - 300;
-					object.position.z = ((i-5)*100)+300; //Math.random() * 800 - 400;
-
-					//object.rotation.x = Math.random() * 2 * Math.PI;
-					//object.rotation.y = Math.random() * 2 * Math.PI;
-					//object.rotation.z = Math.random() * 2 * Math.PI;
-
-					object.scale.x = Math.random() * 2 + 1;
-					object.scale.y = Math.random() * 2 + 1;
-					object.scale.z = Math.random() * 2 + 1;
-
-					object.castShadow = true;
-					object.receiveShadow = true;
-
-					scene.add( object );
+<body>
 
-					objects.push( object );
+    <script src="three.min.js"></script>
 
-				}
+    <script src="js/controls/TrackballControls.js"></script>
 
-				plane = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000, 8, 8 ), new THREE.MeshBasicMaterial( { color: 0x001100, opacity: 0.25, transparent: true, wireframe: true } ) );
-				plane.visible = false;
-				scene.add( plane );
+    <script src="js/libs/stats.min.js"></script>
+    <script src='threex.keyboardstate.js'></script>
+    <script>
+        var Zkeyboard = new THREEx.KeyboardState();
+         // debugger;
+        var container, stats;
+        var camera, controls, scene, projector, renderer;
+        var objects = [],
+            plane;
 
-				projector = new THREE.Projector();
+        var mouse = new THREE.Vector2(),
+            offset = new THREE.Vector3(),
+            INTERSECTED, SELECTED;
 
-				
-                
-                
-                 // FLOOR
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
-	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-	floorTexture.repeat.set( 6, 6 );
-	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side:THREE.DoubleSide } );
-                
-                var floorGeometry = new THREE.PlaneGeometry(10000, 10000, 100, 100);
-	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	               floor.position.x = -200.5;
-                    floor.position.y = -200.5;
-                    floor.position.z = -500;
-                	floor.rotation.x =  Math.PI / 2;
-	               floor.doubleSided = true;
-	               scene.add(floor);
-            
-    
-                
-                renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setClearColor( 0x5a5858 );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.sortObjects = false;
+        init();
+        animate();
 
-				renderer.shadowMapEnabled = true;
-				renderer.shadowMapType = THREE.PCFShadowMap;
 
-				
-                
-                
-                
-                container.appendChild( renderer.domElement );
 
-                
-                
-                
-				var info = document.createElement( 'div' );
-				info.style.position = 'absolute';
-				info.style.top = '10px';
-				info.style.width = '100%';
-				info.style.textAlign = 'center';
-				info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> webgl - draggable cubes';
-				container.appendChild( info );
 
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				container.appendChild( stats.domElement );
+        function makeFloor() {
+            // FLOOR
+            var floorTexture = new THREE.ImageUtils.loadTexture('images/checkerboard.jpg');
+            floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+            floorTexture.repeat.set(6, 6);
+            var floorMaterial = new THREE.MeshBasicMaterial({
+                map: floorTexture,
+                side: THREE.DoubleSide
+            });
 
-				renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-				renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
+            var floorGeometry = new THREE.PlaneGeometry(10000, 10000, 100, 100);
+            var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.position.x = -200.5;
+            floor.position.y = -200.5;
+            floor.position.z = -500;
+            floor.rotation.x = Math.PI / 2;
+            floor.doubleSided = true;
+            scene.add(floor);
+        }
 
-				//
 
-				window.addEventListener( 'resize', onWindowResize, false );
-                
-               // var keyboard = new THREEx.KeyboardState(renderer.domElement);
 
-			}
+        function makeBoxes() {
+            //Make Boxes
+            var geometry = new THREE.BoxGeometry(100, 100, 100);
 
-			function onWindowResize() {
+            for (var i = 0; i < 10; i++) {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+                var object = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
+                    color: Math.random() * 0xffffff,
+                    transparent: true,
+                    opacity: 0.9
+                }));
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+                object.material.ambient = object.material.color;
 
-			}
+                object.position.x = (i - 5) * 100; //Math.random() * 1000 - 500;
+                object.position.y = (i - 5) * 100 + 500; //Math.random() * 600 - 300;
+                object.position.z = ((i - 5) * 100) + 300; //Math.random() * 800 - 400;
 
-			function onDocumentMouseMove( event ) {
+                //object.rotation.x = Math.random() * 2 * Math.PI;
+                //object.rotation.y = Math.random() * 2 * Math.PI;
+                //object.rotation.z = Math.random() * 2 * Math.PI;
 
-				event.preventDefault();
+                object.scale.x = Math.random() * 2 + 1;
+                object.scale.y = Math.random() * 2 + 1;
+                object.scale.z = Math.random() * 2 + 1;
 
-				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                object.castShadow = true;
+                object.receiveShadow = true;
 
-				//
+                scene.add(object);
 
-				var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
-				projector.unprojectVector( vector, camera );
+                objects.push(object);
 
-				var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+            }
 
 
-				if ( SELECTED ) {
+            //Plane to slide the Boxes on
+            plane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000, 8, 8), new THREE.MeshBasicMaterial({
+                color: 0x001100,
+                opacity: 0.25,
+                transparent: true,
+                wireframe: true
+            }));
+            plane.visible = false;
+            scene.add(plane);
 
-					var intersects = raycaster.intersectObject( plane );
-					SELECTED.position.copy( intersects[ 0 ].point.sub( offset ) );
-					return;
+        }
+
+        function makeLight() {
+            //Make Light
+            var light = new THREE.SpotLight(0xffffff, 1.5);
+            light.position.set(0, 500, 2000);
+            light.castShadow = true;
+
+            light.shadowCameraNear = 200;
+            light.shadowCameraFar = camera.far;
+            light.shadowCameraFov = 50;
+
+            light.shadowBias = -0.00022;
+            light.shadowDarkness = 0.5;
+
+            light.shadowMapWidth = 2048;
+            light.shadowMapHeight = 2048;
+
+            scene.add(light);
 
-				}
+        }
 
 
-				var intersects = raycaster.intersectObjects( objects );
+        function makeCamera() {
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 1500;
+            camera.position.y = 1500;
+            camera.position.x = -700;
+        }
 
-				if ( intersects.length > 0 ) {
+        function setupControls() {
+            controls = new THREE.TrackballControls(camera);
+            controls.rotateSpeed = 1.0;
+            controls.zoomSpeed = 1.2;
+            controls.panSpeed = 0.8;
+            controls.noZoom = false;
+            controls.noPan = false;
+            controls.staticMoving = true;
+            controls.dynamicDampingFactor = 0.3;
 
-					if ( INTERSECTED != intersects[ 0 ].object ) {
 
-						if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+        }
 
-						INTERSECTED = intersects[ 0 ].object;
-						INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+        function makeScene() {
 
-						plane.position.copy( INTERSECTED.position );
-						plane.lookAt( camera.position );
+            scene = new THREE.Scene();
+            scene.add(new THREE.AmbientLight(0x505050));
+        }
 
-					}
+        function init() {
+            //Set up container to the body
+            container = document.createElement('div');
+            document.body.appendChild(container);
 
-					container.style.cursor = 'pointer';
+            //Set up the Camera
+            makeCamera();
+            //Set up the controls
+            setupControls();
+            //Make the Scene
+            makeScene();
+            //Make Light
+            makeLight();
+            //Make Boxes
+            makeBoxes();
 
-				} else {
 
-					if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
 
-					INTERSECTED = null;
 
-					container.style.cursor = 'auto';
 
-				}
+            //Projector
+            projector = new THREE.Projector();
+            // FLOOR
+            makeFloor();
 
-			}
+            //Renderer
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setClearColor(0x5a5858);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.sortObjects = false;
 
-			function onDocumentMouseDown( event ) {
+            renderer.shadowMapEnabled = true;
+            renderer.shadowMapType = THREE.PCFShadowMap;
 
-				event.preventDefault();
 
-				var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
-				projector.unprojectVector( vector, camera );
+            //Add the renderer to the Page
+            container.appendChild(renderer.domElement);
 
-				var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 
-				var intersects = raycaster.intersectObjects( objects );
+            var info = document.createElement('div');
+            info.style.position = 'absolute';
+            info.style.top = '10px';
+            info.style.width = '100%';
+            info.style.textAlign = 'center';
+            info.innerHTML = 'cubes Ya, Just Cubes';
+            container.appendChild(info);
+            //Show Stats
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            container.appendChild(stats.domElement);
+            //Mouse WireUp
+            renderer.domElement.addEventListener('mousemove', onDocumentMouseMove, false);
+            renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+            renderer.domElement.addEventListener('mouseup', onDocumentMouseUp, false);
 
-				if ( intersects.length > 0 ) {
+            // Handle The Resize
+            window.addEventListener('resize', onWindowResize, false);
+            // var keyboard = new THREEx.KeyboardState(renderer.domElement);
 
-					controls.enabled = false;
+        }
 
-					SELECTED = intersects[ 0 ].object;
+        function onWindowResize() {
 
-					var intersects = raycaster.intersectObject( plane );
-					offset.copy( intersects[ 0 ].point ).sub( plane.position );
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
 
-					container.style.cursor = 'move';
+            renderer.setSize(window.innerWidth, window.innerHeight);
 
-				}
+        }
 
-			}
+        function onDocumentMouseMove(event) {
 
-			function onDocumentMouseUp( event ) {
+            event.preventDefault();
 
-				event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-				controls.enabled = true;
+            //
 
-				if ( INTERSECTED ) {
+            var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+            projector.unprojectVector(vector, camera);
 
-					plane.position.copy( INTERSECTED.position );
+            var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
 
-					SELECTED = null;
 
-				}
+            if (SELECTED) {
 
-				container.style.cursor = 'auto';
+                var intersects = raycaster.intersectObject(plane);
+                SELECTED.position.copy(intersects[0].point.sub(offset));
+                return;
 
-			}
+            }
 
-			//
 
-			function animate() {
+            var intersects = raycaster.intersectObjects(objects);
 
-				requestAnimationFrame( animate );
+            if (intersects.length > 0) {
 
-				render();
-                update();
-				stats.update();
+                if (INTERSECTED != intersects[0].object) {
 
-			}
+                    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
 
-			function render() {
+                    INTERSECTED = intersects[0].object;
+                    INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
 
-				controls.update();
+                    plane.position.copy(INTERSECTED.position);
+                    plane.lookAt(camera.position);
 
-				renderer.render( scene, camera );
+                }
 
-			}
-            
-            function update()
-{
-	//keyboard.update();
-//debugger;
-	if ( Zkeyboard.down("left") ) {
-		object.translateX( -50 );
-    alert(1);
-    }
-		
-	if ( Zkeyboard.down("right") ) 
-		object.translateX(  50 );
+                container.style.cursor = 'pointer';
 
-	
-}
+            } else {
 
-		</script>
+                if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
 
-	</body>
+                INTERSECTED = null;
+
+                container.style.cursor = 'auto';
+
+            }
+
+        }
+
+        function onDocumentMouseDown(event) {
+
+            event.preventDefault();
+
+            var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+            projector.unprojectVector(vector, camera);
+
+            var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+            var intersects = raycaster.intersectObjects(objects);
+
+            if (intersects.length > 0) {
+
+                controls.enabled = false;
+
+                SELECTED = intersects[0].object;
+
+                var intersects = raycaster.intersectObject(plane);
+                offset.copy(intersects[0].point).sub(plane.position);
+
+                container.style.cursor = 'move';
+
+            }
+
+        }
+
+        function onDocumentMouseUp(event) {
+
+            event.preventDefault();
+
+            controls.enabled = true;
+
+            if (INTERSECTED) {
+
+                plane.position.copy(INTERSECTED.position);
+
+                SELECTED = null;
+
+            }
+
+            container.style.cursor = 'auto';
+
+        }
+
+         //
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            render();
+            update();
+            stats.update();
+
+        }
+
+        function render() {
+
+            controls.update();
+
+            renderer.render(scene, camera);
+
+        }
+
+        function update() {
+            //keyboard.update();
+            //debugger;
+            if (Zkeyboard.down("left")) {
+                object.translateX(-50);
+                alert(1);
+            }
+
+            if (Zkeyboard.down("right"))
+                object.translateX(50);
+
+
+        }
+    </script>
+
+</body>
+
 </html>
